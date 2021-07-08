@@ -30,7 +30,8 @@ class Form(Widget):
     def update(self, _):
         for cell in self.cells:
             # cell.pos = (cell.pos[0] + 2, cell.pos[1] + 3)
-            cell.velocity = Vector(3,0).rotate(randint(0,360))
+            if not hasattr(cell, "velocity"):
+                cell.velocity = Vector(3,0).rotate(randint(0,360))
             cell.move()
 
 
