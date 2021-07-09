@@ -64,8 +64,12 @@ class Form(Widget):
     #     self.cells.append(cell)
 
 class WormApp(App):
+    def __init__(self):
+        super().__init__()
+        self.config = Config()
+        self.form = Form(self.config)
+
     def build(self):
-        self.form = Form()
         self.form.start()
         return self.form
 
