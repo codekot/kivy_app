@@ -6,6 +6,15 @@ from kivy.uix.widget import Widget
 from kivy.clock import Clock
 from kivy.vector import Vector
 
+class Config:
+    DEFAULT_LENGTH = 20
+    CELL_SIZE = 25
+    APPLE_SIZE = 35
+    MARGIN = 4
+    INTERVAL = 0.2
+    DEAD_CELL = (1,0,0,1)
+    APPLE_COLOR = (1,1,0,1)
+
 
 class Cell(Widget):
     graphical_size = ListProperty([1,1])
