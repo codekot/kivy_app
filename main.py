@@ -27,27 +27,75 @@ class Cell(Widget):
         self.margin = margin
         self.actual_pos = (x, y)
         self.graphical_pos_attach()
-        velocity_x = NumericProperty(0)
-        velocity_y = NumericProperty(0)
-        velocity = ReferenceListProperty(velocity_x, velocity_y)
+        # velocity_x = NumericProperty(0)
+        # velocity_y = NumericProperty(0)
+        # velocity = ReferenceListProperty(velocity_x, velocity_y)
 
     def graphical_pos_attach(self):
         self.graphical_pos = (self.actual_pos[0] - self.graphical_size[0] / 2,
                               self.actual_pos[1] - self.graphical_size[1] / 2)
+
+    def move_to(self, x, y):
+        self.actual_pos = (x, y)
+        self.graphical_pos_attach()
+
+    def move_by(self, x, y, **kwargs):
+        self.move_to(self.actual_pos[0] + x, self.actual_pos[1] + y, **kwargs)
+
+    def get_pos(self):
+        return self.actual_pos
+
+    def step_by(self, direction, **kwargs):
+        self.move_by(self.actual_size[0] * direction[0],
+                     self.actual_size[1] * direction[0],
+                     **kwargs)
+
     def move(self):
         self.pos = Vector(*self.velocity) + self.pos
 
-class Form(Widget):
-    def __init__(self):
+
+class Worm(Widget):
+    def __init__(self, config):
         super().__init__()
-        self.cell1 = Cell(100,100,30)
-        self.cell2 = Cell(130,100,30)
-        self.add_widget(self.cell1)
-        self.add_widget(self.cell2)
+        self.cells = []
+        self.config = config
+        self.cell_size = config.CELL_SIZE
+        self.head_init((100,100))
+        for i in range(config.DEFAULT_LENGTH):
+            self.lengthen()
+
+    def destroy(self):
+        for i in range(len(self.cells)):
+            self.remove_widget(self.cells[i])
+        self.cells = []
+
+    def lengthen(self, pos=None, direction=(0,1)):
+        if pos is None:
+            px = self.cells[-1].get_pos()[0] + direction[0] * self.cell_size
+            py = self.cells[-1].get_pos()[1] + direction[1] * self.cell_size
+            pos = (px, py)
+        self.cells.append(Cell(*pos, self.cell_size, margin=self.config.MARGIN))
+        self.add_widget(self.cells[-1])
+
+    def head_init(self, pos):
+        self.lengthen(pos=pos)
+
+
+class Form(Widget):
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.worm = None
+        # self.cell1 = Cell(100,100,30)
+        # self.cell2 = Cell(130,100,30)
+        # self.add_widget(self.cell1)
+        # self.add_widget(self.cell2)
         # self.cells = []
 
     def start(self):
-        Clock.schedule_interval(self.update, 0.01)
+        self.worm = Worm(self.config)
+        self.add_widget(self.worm)
+        Clock.schedule_interval(self.update, self.config.INTERVAL)
 
     def update(self, _):
         # for cell in self.cells:
