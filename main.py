@@ -1,4 +1,4 @@
-from random import randint
+import random
 
 from kivy.app import App
 from kivy.properties import NumericProperty, ReferenceListProperty, ListProperty
@@ -47,7 +47,7 @@ class Cell(Widget):
 
     def step_by(self, direction, **kwargs):
         self.move_by(self.actual_size[0] * direction[0],
-                     self.actual_size[1] * direction[0],
+                     self.actual_size[1] * direction[1],
                      **kwargs)
 
     def move(self):
@@ -80,21 +80,43 @@ class Worm(Widget):
     def head_init(self, pos):
         self.lengthen(pos=pos)
 
+    def move(self, direction):
+        for i in range(len(self.cells)-1, 0, -1):
+            self.cells[i].move_to(*self.cells[i-1].get_pos())
+        self.cells[0].step_by(direction)
+
+
+
 
 class Form(Widget):
     def __init__(self, config):
         super().__init__()
         self.config = config
         self.worm = None
-        # self.cell1 = Cell(100,100,30)
-        # self.cell2 = Cell(130,100,30)
-        # self.add_widget(self.cell1)
-        # self.add_widget(self.cell2)
-        # self.cells = []
+        self.cur_dir = (0,0)
+        self.fruit = None
+
+    def random_cell_location(self, offset):
+        x_row = self.size[0] // self.config.CELL_SIZE
+        x_col = self.size[1] // self.config.CELL_SIZE
+        return random.randint(offset, x_row - offset), \
+               random.randint(offset, x_col - offset)
+
+    def random_location(self, offset):
+        x_row, x_col = self.random_cell_location(offset)
+        return self.config.CELL_SIZE * x_row, self.config.CELL_SIZE * x_col
+
+    def fruit_dislocate(self):
+        x, y = self.random_location(2)
+        self.fruit.move_to(x, y)
 
     def start(self):
+        self.fruit = Cell(0,0, self.config.APPLE_SIZE, self.config.MARGIN)
         self.worm = Worm(self.config)
+        self.fruit_dislocate()
         self.add_widget(self.worm)
+        self.add_widget(self.fruit)
+        self.cur_dir = (1, 0)
         Clock.schedule_interval(self.update, self.config.INTERVAL)
 
     def update(self, _):
@@ -103,13 +125,22 @@ class Form(Widget):
         #     if not hasattr(cell, "velocity"):
         #         cell.velocity = Vector(3,0).rotate(randint(0,360))
         #     cell.move()
-        pass
+        self.worm.move(self.cur_dir)
 
 
-    # def on_touch_down(self, touch):
-    #     cell = Cell(touch.x, touch.y, 30)
-    #     self.add_widget(cell)
-    #     self.cells.append(cell)
+    def on_touch_down(self, touch):
+        ws = touch.x / self.size[0]
+        hs = touch.y / self.size[1]
+        aws = 1 - ws
+        if ws > hs and aws > hs:
+            cur_dir = (0, -1)  # Down
+        elif ws > hs >= aws:
+            cur_dir = (1, 0)  # Right
+        elif ws <= hs < aws:
+            cur_dir = (-1, 0)  # Left
+        else:
+            cur_dir = (0, 1)  # Up
+        self.cur_dir = cur_dir
 
 class WormApp(App):
     def __init__(self):
